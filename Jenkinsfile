@@ -3,6 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "kannandolmites/nginx-frontend" // Replace with your Docker image name
         DOCKER_TAG = "latest" // Update if you want a specific version tag
+         KUBECONFIG = '/home/milford/.kube/config'
         KUBE_DEPLOY_FILE = "deployment-and-service.yml" // Kubernetes manifest file
     }
     stages {
@@ -12,10 +13,13 @@ pipeline {
             }
         }
         stage('Build and Push Docker Image') {
-            steps {               
+            steps {    
+                echo "Building and pushing the Docker image..."
+                withCredentials([usernamePassword(credentialsId: 'docker-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                 sh  'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
-                sh   'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                sh  'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                 sh  'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                }
                 
             }
         }
